@@ -1,11 +1,7 @@
 import os, sys, urllib2, re
-sys.path.insert(0, "/home/dthap/lib/python")
+#sys.path.insert(0, "/home/dthap/lib/python")
 from BeautifulSoup import BeautifulSoup
-
-conf="null" #null-->ALL
-offense = "null" #e.g. GAME_STATS
-defense = "null" #e.g. GAME_STATS
-season = "REG" #POST --> Postseason
+from numpy import *
 
 def get_url(conf="null"
             , offense = "null" 
@@ -18,24 +14,32 @@ def get_url(conf="null"
            season +"&tabSeq=2&qualified=true&Submit=Go")
     return url 
 
-html = urllib2.urlopen(get_url(defense="RUSHING"))
+def get_data(url):
 
-soup = BeautifulSoup(html)
+    html = urllib2.urlopen(url)
+    soup = BeautifulSoup(html)
+    tr=soup.table.findAll('tr')
+    data =[]
 
-#tmp=soup.table.findAll(attrs={'class':re.compile("odd|even")})
-tr=soup.table.findAll('tr')
-data =[]
-for i in tr:
-    r =[]
-    for j in i.contents:
-        try:
-            k=j.string.strip()
-        except Exception as e:
-            k=j.a.contents[0]
-        if k!='':
-            r.append(k)
-    data.append(r)
+    for i in tr:
+        r =[]
+        for j in i.contents:
+            try:
+                k=j.string.strip()
+            except Exception as e:
+                k=j.a.contents[0]
+            if k!='':
+                r.append(k)
+        data.append(r)
+    return data
 
-for i in data:
-    print ", ".join(i)
+def get_stat(data, var):
+    return [float(i) for i in array(data)[1:,data[0].index(var)]] 
 
+if __name__ == "__main__":
+    for i in get_data(get_url(defense="PASSING")):
+        print ", ".join(i)
+
+    data = get_data(get_url(defense="PASSING"))
+
+    print average(get_stat(data,"Pts/G"))
